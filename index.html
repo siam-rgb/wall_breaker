@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick Breaker Game</title>
+    <style>
+        canvas {
+            display: block;
+            margin: auto;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Brick Breaker Game</h1>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const paddle = {
+            x: canvas.width / 2 - 60,
+            y: canvas.height - 30,
+            width: 120,
+            height: 15,
+            speed: 8
+        };
+
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height - 45,
+            radius: 10,
+            speedX: 4,
+            speedY: -4
+        };
+
+        const bricks = [];
+        const brickRowCount = 5;
+        const brickColumnCount = 7;
+
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                bricks.push({
+                    x: c * (80 + 10) + 20,
+                    y: r * (20 + 10) + 30,
+                    width: 80,
+                    height: 20,
+                    status: 1
+                });
+            }
+        }
+
+        // Touch controls
+        let touchStartX = 0;
+
+        canvas.addEventListener("touchstart", touchStartHandler);
+        canvas.addEventListener("touchmove", touchMoveHandler);
+
+        function touchStartHandler(e) {
+            touchStartX = e.touches[0].clientX;
+            e.preventDefault(); // Prevent default touch behavior
+        }
+
+        function touchMoveHandler(e) {
+            const touchX = e.touches[0].clientX;
+            const deltaX = touchX - touchStartX;
+
+            // Adjust the paddle's position based on touch movement
+            paddle.x += deltaX * 0.05;
+
+            // Ensure the paddle stays within the canvas boundaries
+            if (paddle.x < 0) {
+                paddle.x = 0;
+            } else if (paddle.x + paddle.width > canvas.width) {
+                paddle.x = canvas.width - paddle.width;
+            }
+
+            touchStartX = touchX;
+            e.preventDefault(); // Prevent default touch behavior
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawBricks() {
+            for (let i = 0; i < bricks.length; i++) {
+                if (bricks[i].status === 1) {
+                    ctx.beginPath();
+                    ctx.rect(bricks[i].x, bricks[i].y, bricks[i].width, bricks[i].height);
+                    ctx.fillStyle = "#0095DD";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+
+        function collisionDetection() {
+            for (let i = 0; i < bricks.length; i++) {
+                if (
+                    ball.x > bricks[i].x &&
+                    ball.x < bricks[i].x + bricks[i].width &&
+                    ball.y > bricks[i].y &&
+                    ball.y < bricks[i].y + bricks[i].height &&
+                    bricks[i].status === 1
+                ) {
+                    ball.speedY = -ball.speedY;
+                    bricks[i].status = 0;
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBricks();
+            drawPaddle();
+            drawBall();
+            collisionDetection();
+
+            // Move the ball
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Bounce off the walls
+            if (ball.x + ball.speedX > canvas.width - ball.radius || ball.x + ball.speedX < ball.radius) {
+                ball.speedX = -ball.speedX;
+            }
+
+            // Bounce off the ceiling
+            if (ball.y + ball.speedY < ball.radius) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Bounce off the paddle
+            if (
+                ball.y + ball.speedY > paddle.y &&
+                ball.y + ball.speedY < paddle.y + paddle.height &&
+                ball.x > paddle.x &&
+                ball.x < paddle.x + paddle.width
+            ) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Game over if the ball hits the bottom
+            if (ball.y + ball.speedY > canvas.height - ball.radius) {
+                alert("Game Over!");
+                document.location.reload();
+            }
+
+            // Move the paddle with boundaries
+            if (paddle.x + paddle.speed > 0 && paddle.x + paddle.speed < canvas.width - paddle.width) {
+                paddle.x += paddle.speed;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        // Start the game loop
+        draw();
+    </script>
+
+</body>
+</html>
